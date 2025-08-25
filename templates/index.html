@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dosya İşleme Sistemi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .loading {
+            display: none;
+        }
+        .result-section {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Dosya İşleme Sistemi</h1>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="file" class="form-label">Dosya Seçin</label>
+                                <input type="file" class="form-control" id="file" name="file" required>
+                                <div class="form-text">
+                                    Desteklenen formatlar: TXT, CSV, DOCX, XLSX, PDF, MP3, WAV, OGG, M4A
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Yükle ve İşle</button>
+                        </form>
+
+                        <div class="loading mt-3 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Yükleniyor...</span>
+                            </div>
+                            <p class="mt-2">Dosya işleniyor, lütfen bekleyin...</p>
+                        </div>
+
+                        <div class="result-section mt-4">
+                            <h3>İşlem Sonuçları</h3>
+                            <div class="alert alert-success">
+                                <strong>Dosya Türü:</strong> <span id="fileType"></span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h4>İşlenmiş İçerik</h4>
+                                <div class="border p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                                    <pre id="content"></pre>
+                                </div>
+                                <a id="downloadProcessed" href="#" class="btn btn-sm btn-secondary mt-2">İşlenmiş Dosyayı İndir</a>
+                            </div>
+
+                            <div id="aiSection" class="mb-3" style="display: none;">
+                                <h4>Yapay Zeka Özeti</h4>
+                                <div class="border p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                                    <pre id="aiContent"></pre>
+                                </div>
+                                <a id="downloadAI" href="#" class="btn btn-sm btn-secondary mt-2">AI Özetini İndir</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('file');
+            formData.append('file', fileInput.files[0]);
+
+            // Show loading
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.result-section').style.display = 'none';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Hata: ' + data.error);
+                    return;
+                }
+
+                // Display results
+                document.getElementById('fileType').textContent = data.file_type;
+                document.getElementById('content').textContent = data.content;
+                document.getElementById('downloadProcessed').href = '/download/' + data.processed_file;
+
+                if (data.ai_summary) {
+                    document.getElementById('aiSection').style.display = 'block';
+                    document.getElementById('aiContent').textContent = data.ai_summary;
+                    document.getElementById('downloadAI').href = '/download/' + data.ai_file;
+                } else {
+                    document.getElementById('aiSection').style.display = 'none';
+                }
+
+                document.querySelector('.result-section').style.display = 'block';
+            } catch (error) {
+                alert('Bir hata oluştu: ' + error.message);
+            } finally {
+                document.querySelector('.loading').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 
