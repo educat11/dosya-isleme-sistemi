@@ -13,7 +13,7 @@ Bu sistem, çeşitli dosya formatlarını (TXT, CSV, DOCX, XLSX, PDF, MP3, WAV, 
 
 ## 🚀 Canlı Demo
 
-🌐 **GitHub Pages Demo**: [https://yourusername.github.io/dosya-isleme-sistemi](https://yourusername.github.io/dosya-isleme-sistemi)
+🌐 **GitHub Pages Demo**: [https://educat11.github.io/dosya-isleme-sistemi](https://educat11.github.io/dosya-isleme-sistemi)
 
 ## 📋 Gereksinimler
 
@@ -28,7 +28,7 @@ Bu sistem, çeşitli dosya formatlarını (TXT, CSV, DOCX, XLSX, PDF, MP3, WAV, 
 
 1. **Repository'yi klonlayın:**
 ```bash
-git clone https://github.com/yourusername/dosya-isleme-sistemi.git
+git clone https://github.com/educat11/dosya-isleme-sistemi.git
 cd dosya-isleme-sistemi
 ```
 
@@ -134,7 +134,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
 
 ## 👨‍💻 Geliştirici
 
-**Nail** - [GitHub Profili](https://github.com/yourusername)
+**educat11** - [GitHub Profili](https://github.com/educat11)
 
 ## 🙏 Teşekkürler
 
