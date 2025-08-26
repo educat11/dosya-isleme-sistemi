@@ -156,10 +156,6 @@
                                     <i class="fas fa-download me-2"></i>
                                     İşlenmiş Dosyayı İndir
                                 </button>
-                                <button id="extractAndTranscribe" class="btn btn-outline-primary mt-2" style="display:none;">
-                                    <i class="fas fa-microphone me-2"></i>
-                                    Sesi Çıkar ve Çevir
-                                </button>
                             </div>
 
                             <div id="aiSection" class="mb-4" style="display: none;">
@@ -328,26 +324,28 @@
                     } catch (error) {
                         document.getElementById('aiContent').textContent = 'AI özeti oluşturulurken hata: ' + error.message;
                     }
-                    // For video files: show button and auto-start transcription
-                    const isVideo = ['mp4','webm'].includes(file.name.split('.').pop().toLowerCase());
-                    const extractBtn = document.getElementById('extractAndTranscribe');
-                    extractBtn.style.display = isVideo ? 'inline-block' : 'none';
-                    if (isVideo) {
-                        try {
-                            extractBtn.disabled = true;
-                            extractBtn.textContent = 'Ses çıkarılıyor...';
-                            const apiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
-                            const transcript = await extractAudioAndTranscribe(file, apiKey);
-                            document.getElementById('aiContent').textContent = transcript;
-                        } catch (autoErr) {
-                            alert('Transkripsiyon hatası: ' + autoErr.message);
-                        } finally {
-                            extractBtn.textContent = 'Sesi Çıkar ve Çevir';
-                            extractBtn.disabled = false;
-                        }
-                    }
                 } else {
                     document.getElementById('aiSection').style.display = 'none';
+                }
+
+                // If video, do automatic transcription and place result into processed content
+                const isVideo = ['mp4','webm'].includes(file.name.split('.').pop().toLowerCase());
+                if (isVideo) {
+                    try {
+                        document.getElementById('content').textContent = 'Transkripsiyon yapılıyor...';
+                        const apiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
+                        const transcript = await extractAudioAndTranscribe(file, apiKey);
+                        document.getElementById('content').textContent = transcript;
+                        // Opsiyonel: transkript üzerinden AI özeti üret
+                        try {
+                            document.getElementById('aiSection').style.display = 'block';
+                            document.getElementById('aiContent').textContent = 'AI özeti oluşturuluyor...';
+                            const aiSummary = await generateAISummary(transcript, apiKey);
+                            document.getElementById('aiContent').textContent = aiSummary;
+                        } catch (_) {}
+                    } catch (err) {
+                        alert('Transkripsiyon hatası: ' + err.message);
+                    }
                 }
 
                 document.querySelector('.result-section').style.display = 'block';
@@ -478,21 +476,8 @@
                 }
 
                 if (['mp4','webm'].includes(ext)) {
-                    const objectUrl = URL.createObjectURL(file);
-                    const video = document.createElement('video');
-                    video.preload = 'metadata';
-                    video.src = objectUrl;
-                    video.onloadedmetadata = () => {
-                        const duration = isFinite(video.duration) ? video.duration : 0;
-                        const sizeText = `${(file.size/1024/1024).toFixed(2)} MB`;
-                        const dims = `${video.videoWidth}x${video.videoHeight}`;
-                        URL.revokeObjectURL(objectUrl);
-                        resolve(`Video dosyası bilgileri\nSüre (sn): ${duration.toFixed(2)}\nÇözünürlük: ${dims}\nBoyut: ${sizeText}\n\nNot: Konuşmayı metne çevirmek için aşağıdaki 'Sesi Çıkar ve Çevir' butonunu kullanın.`);
-                    };
-                    video.onerror = () => {
-                        URL.revokeObjectURL(objectUrl);
-                        resolve('Video dosyası yüklendi ancak meta bilgileri okunamadı.');
-                    };
+                    // Video için önizleme içeriği göstermeyelim; transkripsiyonu ayrı başlatıyoruz
+                    resolve('');
                     return;
                 }
 
@@ -507,7 +492,6 @@
         function setupDownloadButtons(filename, content) {
             const processedBtn = document.getElementById('downloadProcessed');
             const aiBtn = document.getElementById('downloadAI');
-            const extractBtn = document.getElementById('extractAndTranscribe');
             
             processedBtn.onclick = () => {
                 const blob = new Blob([content], { type: 'text/plain' });
@@ -530,24 +514,7 @@
                 URL.revokeObjectURL(url);
             };
 
-            if (extractBtn) {
-                extractBtn.onclick = async () => {
-                    try {
-                        extractBtn.disabled = true;
-                        extractBtn.textContent = 'Ses çıkarılıyor...';
-                        const apiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
-                        const transcript = await extractAudioAndTranscribe(fileInput.files[0], apiKey);
-                        document.getElementById('aiSection').style.display = 'block';
-                        document.getElementById('aiContent').textContent = transcript;
-                        extractBtn.textContent = 'Sesi Çıkar ve Çevir';
-                        extractBtn.disabled = false;
-                    } catch (err) {
-                        extractBtn.textContent = 'Sesi Çıkar ve Çevir';
-                        extractBtn.disabled = false;
-                        alert('Transkripsiyon hatası: ' + err.message);
-                    }
-                };
-            }
+            // No manual extract button anymore
         }
 
         async function simulateFileProcessing(file) {
