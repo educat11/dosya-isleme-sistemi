@@ -13,7 +13,7 @@ Bu web uygulaması, tarayıcı içinde (GitHub Pages) çalışan hızlı bir dos
 
 ## 🚀 Canlı Demo
 
-🌐 **GitHub Pages Demo**: [https://educat11.github.io/dosya-isleme-sistemi](https://educat11.github.io/dosya-isleme-sistemi)
+🌐 **GitHub Pages Demo**: <a href="https://educat11.github.io/dosya-isleme-sistemi" target="_blank" rel="noopener noreferrer">https://educat11.github.io/dosya-isleme-sistemi</a>
 
 ## 📋 Gereksinimler
 
