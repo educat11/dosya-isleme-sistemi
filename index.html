@@ -151,9 +151,6 @@
                                 <h4>
                                     <i class="fas fa-robot me-2"></i>
                                     Yapay Zeka Özeti
-                                    <button class="btn btn-sm btn-outline-primary ms-2" onclick="clearApiKey()" title="API Anahtarını Sil">
-                                        <i class="fas fa-key"></i>
-                                    </button>
                                 </h4>
                                 <div class="border p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
                                     <pre id="aiContent"></pre>
@@ -216,7 +213,7 @@
                     </p>
                     <p class="text-muted">
                         <i class="fas fa-github me-2"></i>
-                        <a href="https://github.com/yourusername/dosya-isleme-sistemi" class="text-decoration-none">
+                        <a href="https://github.com/educat11/dosya-isleme-sistemi" class="text-decoration-none">
                             GitHub Repository
                         </a>
                     </p>
@@ -299,27 +296,15 @@
                 // Show AI section for text files
                 if (fileType === 'Metin dosyası') {
                     document.getElementById('aiSection').style.display = 'block';
-                    // Check if API key is available
-                    const apiKey = localStorage.getItem('gemini_api_key');
-                    if (apiKey) {
-                        document.getElementById('aiContent').textContent = 'AI özeti oluşturuluyor...';
-                        try {
-                            const aiSummary = await generateAISummary(content, apiKey);
-                            document.getElementById('aiContent').textContent = aiSummary;
-                        } catch (error) {
-                            document.getElementById('aiContent').textContent = 'AI özeti oluşturulurken hata: ' + error.message;
-                        }
-                                         } else {
-                         // Varsayılan API anahtarını kullan
-                         const defaultApiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
-                         document.getElementById('aiContent').textContent = 'AI özeti oluşturuluyor...';
-                         try {
-                             const aiSummary = await generateAISummary(content, defaultApiKey);
-                             document.getElementById('aiContent').textContent = aiSummary;
-                         } catch (error) {
-                             document.getElementById('aiContent').textContent = 'AI özeti oluşturulurken hata: ' + error.message;
-                         }
-                     }
+                    // Varsayılan API anahtarını kullan
+                    const defaultApiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
+                    document.getElementById('aiContent').textContent = 'AI özeti oluşturuluyor...';
+                    try {
+                        const aiSummary = await generateAISummary(content, defaultApiKey);
+                        document.getElementById('aiContent').textContent = aiSummary;
+                    } catch (error) {
+                        document.getElementById('aiContent').textContent = 'AI özeti oluşturulurken hata: ' + error.message;
+                    }
                 } else {
                     document.getElementById('aiSection').style.display = 'none';
                 }
@@ -399,7 +384,7 @@
 
         async function generateAISummary(content, apiKey) {
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -427,23 +412,6 @@
             } catch (error) {
                 throw new Error(`AI özeti oluşturulamadı: ${error.message}`);
             }
-        }
-
-        function saveApiKey() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (apiKey) {
-                localStorage.setItem('gemini_api_key', apiKey);
-                alert('API anahtarı kaydedildi! Sayfayı yenileyin.');
-                location.reload();
-            } else {
-                alert('Lütfen geçerli bir API anahtarı girin.');
-            }
-        }
-
-        function clearApiKey() {
-            localStorage.removeItem('gemini_api_key');
-            alert('API anahtarı silindi!');
-            location.reload();
         }
     </script>
 </body>
