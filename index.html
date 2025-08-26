@@ -342,12 +342,14 @@
             const pdfFormats = ['pdf'];
             const imageFormats = ['png', 'jpg', 'jpeg'];
             const audioFormats = ['mp3', 'wav', 'ogg', 'm4a'];
+            const videoFormats = ['mp4', 'webm'];
             
             if (textFormats.includes(ext)) return 'Metin dosyası';
             if (officeFormats.includes(ext)) return 'Ofis dosyası';
             if (pdfFormats.includes(ext)) return 'PDF dosyası';
             if (imageFormats.includes(ext)) return 'Görsel dosyası';
             if (audioFormats.includes(ext)) return 'Ses dosyası';
+            if (videoFormats.includes(ext)) return 'Video dosyası';
             return 'Bilinmeyen format';
         }
 
@@ -432,6 +434,42 @@
                     };
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
+                    return;
+                }
+
+                if (['mp3','wav','ogg','m4a'].includes(ext)) {
+                    const objectUrl = URL.createObjectURL(file);
+                    const audio = new Audio();
+                    audio.preload = 'metadata';
+                    audio.src = objectUrl;
+                    audio.onloadedmetadata = () => {
+                        const duration = isFinite(audio.duration) ? audio.duration : 0;
+                        URL.revokeObjectURL(objectUrl);
+                        resolve(`Ses dosyası bilgileri\nSüre (sn): ${duration.toFixed(2)}`);
+                    };
+                    audio.onerror = () => {
+                        URL.revokeObjectURL(objectUrl);
+                        resolve('Ses dosyası yüklendi ancak meta bilgileri okunamadı.');
+                    };
+                    return;
+                }
+
+                if (['mp4','webm'].includes(ext)) {
+                    const objectUrl = URL.createObjectURL(file);
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.src = objectUrl;
+                    video.onloadedmetadata = () => {
+                        const duration = isFinite(video.duration) ? video.duration : 0;
+                        const sizeText = `${(file.size/1024/1024).toFixed(2)} MB`;
+                        const dims = `${video.videoWidth}x${video.videoHeight}`;
+                        URL.revokeObjectURL(objectUrl);
+                        resolve(`Video dosyası bilgileri\nSüre (sn): ${duration.toFixed(2)}\nÇözünürlük: ${dims}\nBoyut: ${sizeText}`);
+                    };
+                    video.onerror = () => {
+                        URL.revokeObjectURL(objectUrl);
+                        resolve('Video dosyası yüklendi ancak meta bilgileri okunamadı.');
+                    };
                     return;
                 }
 
