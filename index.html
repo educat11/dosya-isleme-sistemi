@@ -606,26 +606,71 @@
 
         // Extract audio from video (mp4/webm) using ffmpeg.wasm and transcribe via Gemini 2.5 Flash
         async function extractAudioAndTranscribe(file, apiKey) {
-            await ensureFFmpegLoaded();
-            const { createFFmpeg } = window.FFmpeg;
-            const ffmpeg = createFFmpeg({
-                log: false,
-                corePath: `${window.__ffmpegBase || 'https://unpkg.com'}/@ffmpeg/core@0.12.9/dist/umd/ffmpeg-core.js`
+            try {
+                await ensureFFmpegLoaded();
+                const { createFFmpeg } = window.FFmpeg;
+                const ffmpeg = createFFmpeg({
+                    log: false,
+                    corePath: `${window.__ffmpegBase || 'https://unpkg.com'}/@ffmpeg/core@0.12.9/dist/umd/ffmpeg-core.js`
+                });
+                await ffmpeg.load();
+
+                // Write the input video to FS
+                const inputName = 'input.' + file.name.split('.').pop().toLowerCase();
+                ffmpeg.FS('writeFile', inputName, new Uint8Array(await file.arrayBuffer()));
+
+                // Convert to mono 16k wav (small for transcription)
+                const outputName = 'audio.wav';
+                await ffmpeg.run('-i', inputName, '-ac', '1', '-ar', '16000', outputName);
+
+                const wavData = ffmpeg.FS('readFile', outputName);
+                const blob = new Blob([wavData.buffer], { type: 'audio/wav' });
+                return await transcribeBlobWithGemini(blob, 'audio/wav', apiKey);
+            } catch (e) {
+                // Fallback: capture audio via MediaRecorder in real-time (no ffmpeg)
+                const blob = await extractAudioWithMediaRecorder(file);
+                return await transcribeBlobWithGemini(blob, blob.type || 'audio/webm', apiKey);
+            }
+        }
+
+        async function extractAudioWithMediaRecorder(file) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const url = URL.createObjectURL(file);
+                    const video = document.createElement('video');
+                    video.src = url;
+                    video.muted = true;
+                    video.playsInline = true;
+                    video.style.display = 'none';
+                    document.body.appendChild(video);
+
+                    const stream = video.captureStream ? video.captureStream() : video.mozCaptureStream();
+                    const audioTracks = stream.getAudioTracks();
+                    if (audioTracks.length === 0) {
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(video);
+                        reject(new Error('Videoda ses parçası bulunamadı.'));
+                        return;
+                    }
+                    const audioStream = new MediaStream(audioTracks);
+                    const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+                    const recorder = new MediaRecorder(audioStream, { mimeType: mime });
+                    const chunks = [];
+                    recorder.ondataavailable = (ev) => { if (ev.data.size > 0) chunks.push(ev.data); };
+                    recorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: mime });
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(video);
+                        resolve(blob);
+                    };
+                    await video.play();
+                    recorder.start();
+                    video.onended = () => recorder.stop();
+                } catch (err) { reject(err); }
             });
-            await ffmpeg.load();
+        }
 
-            // Write the input video to FS
-            const inputName = 'input.' + file.name.split('.').pop().toLowerCase();
-            ffmpeg.FS('writeFile', inputName, new Uint8Array(await file.arrayBuffer()));
-
-            // Convert to mono 16k wav (small for transcription)
-            const outputName = 'audio.wav';
-            await ffmpeg.run('-i', inputName, '-ac', '1', '-ar', '16000', outputName);
-
-            const wavData = ffmpeg.FS('readFile', outputName);
-            const blob = new Blob([wavData.buffer], { type: 'audio/wav' });
-
-            // Send to Gemini via audio inline (base64)
+        async function transcribeBlobWithGemini(blob, mime, apiKey) {
             const base64 = await blobToBase64(blob);
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
@@ -634,12 +679,11 @@
                     contents: [{
                         parts: [
                             { text: 'Bu sesin tamamını Türkçe olarak yazıya dök.' },
-                            { inline_data: { mime_type: 'audio/wav', data: base64 } }
+                            { inline_data: { mime_type: mime, data: base64 } }
                         ]
                     }]
                 })
             });
-
             if (!resp.ok) {
                 const errorData = await resp.json().catch(() => ({}));
                 throw new Error(`API Hatası: ${resp.status} - ${errorData.error?.message || 'Bilinmeyen hata'}`);
