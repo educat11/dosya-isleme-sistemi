@@ -15,7 +15,7 @@
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.9/dist/ffmpeg.min.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.9/dist/umd/ffmpeg.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         .loading {
@@ -576,8 +576,14 @@
 
         // Extract audio from video (mp4/webm) using ffmpeg.wasm and transcribe via Gemini 2.5 Flash
         async function extractAudioAndTranscribe(file, apiKey) {
-            const { createFFmpeg } = FFmpeg;
-            const ffmpeg = createFFmpeg({ log: false });
+            const { createFFmpeg } = window.FFmpeg || {};
+            if (!createFFmpeg) {
+                throw new Error('FFmpeg kütüphanesi yüklenemedi. Sayfayı yenileyip tekrar deneyin.');
+            }
+            const ffmpeg = createFFmpeg({
+                log: false,
+                corePath: 'https://unpkg.com/@ffmpeg/core@0.12.9/dist/umd/ffmpeg-core.js'
+            });
             await ffmpeg.load();
 
             // Write the input video to FS
