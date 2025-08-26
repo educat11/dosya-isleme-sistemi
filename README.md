@@ -1,6 +1,6 @@
-# 📁 Dosya İşleme Sistemi
+# 📁 Dosya İşleme Sistemi (Tamamen İstemci Tarafı)
 
-Bu sistem, çeşitli dosya formatlarını (TXT, CSV, DOCX, XLSX, PDF, MP3, WAV, OGG, M4A) işleyebilen ve içeriklerini çıkarabilen bir web uygulamasıdır. Ayrıca metin dosyaları için yapay zeka ile özet ve soru üretme özelliği bulunmaktadır.
+Bu web uygulaması, tarayıcı içinde (GitHub Pages) çalışan hızlı bir dosya işleme aracıdır. Metin, ofis, PDF, görüntü, ses ve video dosyalarından içerik çıkarır; video/ses için konuşmayı metne çevirir; isteğe bağlı olarak metni Google Gemini ile özetler.
 
 ## 🌟 Özellikler
 
@@ -17,70 +17,34 @@ Bu sistem, çeşitli dosya formatlarını (TXT, CSV, DOCX, XLSX, PDF, MP3, WAV, 
 
 ## 📋 Gereksinimler
 
-- Python 3.8 veya üzeri
-- Tesseract OCR
-- FFmpeg
-- Google Gemini API anahtarı
+- Bir tarayıcı (Chrome/Edge önerilir)
+- Google Gemini API anahtarı (kullanıcı tarafından tarayıcıya girilir ve localStorage’da saklanır)
 
-## 🛠️ Kurulum
+## 🛠️ Kurulum / Geliştirme
 
-### Yerel Kurulum
-
-1. **Repository'yi klonlayın:**
+1) Repo’yu klonlayın (opsiyonel):
 ```bash
 git clone https://github.com/educat11/dosya-isleme-sistemi.git
 cd dosya-isleme-sistemi
 ```
-
-2. **Gerekli sistem paketlerini yükleyin:**
-
-```bash
-# Ubuntu/Debian için:
-sudo apt update
-sudo apt-get install -y tesseract-ocr tesseract-ocr-tur
-sudo apt-get install -y ffmpeg
-sudo apt-get install -y poppler-utils
-
-# Windows için:
-# Tesseract OCR: https://github.com/UB-Mannheim/tesseract/wiki
-# FFmpeg: https://ffmpeg.org/download.html
-```
-
-3. **Python paketlerini yükleyin:**
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# veya
-venv\Scripts\activate     # Windows
-pip install -r requirements.txt
-```
-
-4. **Google Gemini API anahtarınızı ayarlayın:**
-   - `13_2.py` dosyasında `GEMINI_API_KEY` değişkenini kendi API anahtarınızla güncelleyin.
+2) Geliştirme için dosyaları düzenleyip doğrudan `index.html`’i açabilirsiniz. Sunucu gerekmez.
 
 ## 🏃‍♂️ Çalıştırma
 
 ### Yerel Çalıştırma
 
-```bash
-python 13_2.py
-```
-
-Tarayıcınızda `http://localhost:5000` adresine gidin.
+`index.html` dosyasını çift tıklayıp tarayıcıda açmanız yeterli.
 
 ### GitHub Pages Deployment
 
-Bu proje GitHub Actions ile otomatik olarak deploy edilir. Ana branch'e push yaptığınızda otomatik olarak GitHub Pages'te yayınlanır.
+Ana branch’e push sonrası GitHub Pages otomatik yayınlar: `https://educat11.github.io/dosya-isleme-sistemi`
 
 ## 📖 Kullanım
 
 1. Web arayüzünden bir dosya seçin
-2. "Yükle ve İşle" butonuna tıklayın
-3. İşlem tamamlandığında:
-   - İşlenmiş içeriği görüntüleyebilirsiniz
-   - İşlenmiş dosyayı indirebilirsiniz
-   - Metin dosyaları için yapay zeka özetini görüntüleyebilir ve indirebilirsiniz
+2. Gerekirse üst kısımdan Gemini API anahtarınızı kaydedin
+3. "Yükle ve İşle" deyin; ses/video otomatik transkribe edilir, metin/görsel/PDF içerikleri çıkarılır
+4. İşlenmiş içerik ve (varsa) AI özeti ekranda görüntülenir ve indirilebilir
 
 ## 🔧 Teknik Detaylar
 
@@ -92,33 +56,26 @@ Bu proje GitHub Actions ile otomatik olarak deploy edilir. Ana branch'e push yap
 | DOCX | Word belgeleri | Metin + gömülü görsel OCR |
 | XLSX | Excel dosyaları | Tüm sayfa verilerini çıkarma |
 | PDF | PDF belgeleri | Metin + OCR + görsel işleme |
-| MP3/WAV/OGG/M4A | Ses dosyaları | Google Speech Recognition |
+| MP3/WAV/OGG/M4A | Ses dosyaları | Doğrudan Gemini 2.5 Flash ile transkripsiyon |
 
-### API Entegrasyonu
+### API / Kitaplıklar
 
-- **Google Gemini API**: Metin özetleme ve soru üretme
-- **Google Speech Recognition**: Ses dosyası işleme
-- **Tesseract OCR**: Görsel metin tanıma
+- **Google Gemini**: Özetleme ve ses/metin üretimi
+- **Tesseract.js**: Görsellerde OCR (tarayıcı)
+- **pdf.js**: PDF metin çıkarımı (tarayıcı)
+- **ffmpeg.wasm**: Videodan ses çıkarma ve MP3’e dönüştürme (tarayıcı)
 
 ## 🔒 Güvenlik Notları
 
-- Uygulama varsayılan olarak tüm IP adreslerinden erişime açıktır (`0.0.0.0`)
-- Üretim ortamında bir reverse proxy (örn. Nginx) ve SSL sertifikası kullanmanız önerilir
-- Maksimum dosya boyutu 16MB ile sınırlıdır
-- API anahtarlarını güvenli bir şekilde saklayın
+- Tüm işlemler tarayıcıda yapılır; dosyalar sunucuya yüklenmez
+- API anahtarınız tarayıcınızın localStorage’ında tutulur; gizliliğinizi koruyun
+- Büyük videolarda tarayıcı belleği kısıtı olabilir; kısa kliplerle test edin
 
 ## 🐛 Hata Ayıklama
 
-### Yaygın Sorunlar
-
-- **Tesseract OCR hataları**: `tesseract --version` komutu ile kurulumu kontrol edin
-- **FFmpeg hataları**: `ffmpeg -version` komutu ile kurulumu kontrol edin
-- **Dosya izinleri**: `uploads` klasörünün yazma izinlerini kontrol edin
-- **API anahtarı hataları**: Gemini API anahtarının geçerli olduğunu kontrol edin
-
-### Log Dosyaları
-
-Uygulama çalışırken konsol çıktısında detaylı log bilgileri görüntülenir.
+- "FFmpeg kütüphanesi yüklenemedi": Sayfayı yenileyin, reklam engelleyiciyi kapatın
+- "Videoda ses parçası bulunamadı": Kullanılan videoda ses kanalı olmayabilir
+- "API Hatası …": Geçerli Gemini API anahtarı girildiğinden emin olun
 
 ## 🤝 Katkıda Bulunma
 
@@ -134,7 +91,7 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
 
 ## 👨‍💻 Geliştirici
 
-**educat11** - [GitHub Profili](https://github.com/educat11)
+**Nail (educat11)** - [GitHub Profili](https://github.com/educat11)
 
 ## 🙏 Teşekkürler
 
