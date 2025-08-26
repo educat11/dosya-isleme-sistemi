@@ -328,9 +328,24 @@
                     } catch (error) {
                         document.getElementById('aiContent').textContent = 'AI özeti oluşturulurken hata: ' + error.message;
                     }
-                    // Show extract button for video files
+                    // For video files: show button and auto-start transcription
                     const isVideo = ['mp4','webm'].includes(file.name.split('.').pop().toLowerCase());
-                    document.getElementById('extractAndTranscribe').style.display = isVideo ? 'inline-block' : 'none';
+                    const extractBtn = document.getElementById('extractAndTranscribe');
+                    extractBtn.style.display = isVideo ? 'inline-block' : 'none';
+                    if (isVideo) {
+                        try {
+                            extractBtn.disabled = true;
+                            extractBtn.textContent = 'Ses çıkarılıyor...';
+                            const apiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
+                            const transcript = await extractAudioAndTranscribe(file, apiKey);
+                            document.getElementById('aiContent').textContent = transcript;
+                        } catch (autoErr) {
+                            alert('Transkripsiyon hatası: ' + autoErr.message);
+                        } finally {
+                            extractBtn.textContent = 'Sesi Çıkar ve Çevir';
+                            extractBtn.disabled = false;
+                        }
+                    }
                 } else {
                     document.getElementById('aiSection').style.display = 'none';
                 }
@@ -643,8 +658,17 @@
                     video.playsInline = true;
                     video.style.display = 'none';
                     document.body.appendChild(video);
-
-                    const stream = video.captureStream ? video.captureStream() : video.mozCaptureStream();
+                    await new Promise(r => {
+                        if (video.readyState >= 1) return r();
+                        video.onloadedmetadata = () => r();
+                    });
+                    const stream = video.captureStream ? video.captureStream() : (video.mozCaptureStream ? video.mozCaptureStream() : null);
+                    if (!stream) {
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(video);
+                        reject(new Error('Tarayıcı captureStream desteği yok.'));
+                        return;
+                    }
                     const audioTracks = stream.getAudioTracks();
                     if (audioTracks.length === 0) {
                         URL.revokeObjectURL(url);
@@ -664,8 +688,10 @@
                         resolve(blob);
                     };
                     await video.play();
+                    // Eğer video anında bitmediyse kısa bir süre kaydet, sonra durdur
+                    setTimeout(() => { try { recorder.state !== 'inactive' && recorder.stop(); } catch(_){} }, Math.min(5000, Math.max(2000, Math.floor(video.duration * 1000))));
                     recorder.start();
-                    video.onended = () => recorder.stop();
+                    video.onended = () => { try { recorder.state !== 'inactive' && recorder.stop(); } catch(_){} };
                 } catch (err) { reject(err); }
             });
         }
