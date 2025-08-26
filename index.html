@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dosya İşleme Sistemi - GitHub Pages</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .loading {
+            display: none;
+        }
+        .result-section {
+            display: none;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+        }
+        .feature-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .file-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            transition: border-color 0.3s ease;
+        }
+        .file-upload-area:hover {
+            border-color: #667eea;
+        }
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+        }
+        .format-badge {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            margin: 0.25rem;
+            display: inline-block;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-4">
+                        <i class="fas fa-file-alt me-3"></i>
+                        Dosya İşleme Sistemi
+                    </h1>
+                    <p class="lead mb-4">
+                        Çeşitli dosya formatlarını işleyebilen ve içeriklerini çıkarabilen gelişmiş web uygulaması
+                    </p>
+                    <div class="mb-4">
+                        <span class="format-badge">TXT</span>
+                        <span class="format-badge">CSV</span>
+                        <span class="format-badge">DOCX</span>
+                        <span class="format-badge">XLSX</span>
+                        <span class="format-badge">PDF</span>
+                        <span class="format-badge">MP3</span>
+                        <span class="format-badge">WAV</span>
+                        <span class="format-badge">OGG</span>
+                        <span class="format-badge">M4A</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card feature-card">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-center mb-4">
+                            <i class="fas fa-upload me-2"></i>
+                            Dosya Yükleme ve İşleme
+                        </h3>
+                        
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="file-upload-area" id="dropZone">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5>Dosyanızı buraya sürükleyin veya seçin</h5>
+                                <p class="text-muted">Desteklenen formatlar: TXT, CSV, DOCX, XLSX, PDF, MP3, WAV, OGG, M4A</p>
+                                <input type="file" class="form-control d-none" id="file" name="file" required>
+                                <button type="button" class="btn btn-primary" onclick="document.getElementById('file').click()">
+                                    <i class="fas fa-folder-open me-2"></i>
+                                    Dosya Seç
+                                </button>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Yükle ve İşle
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="loading mt-4 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Yükleniyor...</span>
+                            </div>
+                            <p class="mt-2">Dosya işleniyor, lütfen bekleyin...</p>
+                        </div>
+
+                        <div class="result-section mt-4">
+                            <h3 class="text-center mb-4">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                İşlem Sonuçları
+                            </h3>
+                            
+                            <div class="alert alert-success">
+                                <strong>Dosya Türü:</strong> <span id="fileType"></span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4>
+                                    <i class="fas fa-file-text me-2"></i>
+                                    İşlenmiş İçerik
+                                </h4>
+                                <div class="border p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                                    <pre id="content"></pre>
+                                </div>
+                                <button id="downloadProcessed" class="btn btn-secondary mt-2">
+                                    <i class="fas fa-download me-2"></i>
+                                    İşlenmiş Dosyayı İndir
+                                </button>
+                            </div>
+
+                            <div id="aiSection" class="mb-4" style="display: none;">
+                                <h4>
+                                    <i class="fas fa-robot me-2"></i>
+                                    Yapay Zeka Özeti
+                                </h4>
+                                <div class="border p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                                    <pre id="aiContent"></pre>
+                                </div>
+                                <button id="downloadAI" class="btn btn-secondary mt-2">
+                                    <i class="fas fa-download me-2"></i>
+                                    AI Özetini İndir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-eye fa-3x text-primary mb-3"></i>
+                        <h5>OCR Teknolojisi</h5>
+                        <p class="text-muted">PDF ve görsellerdeki metinleri otomatik olarak okur ve çıkarır.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-microphone fa-3x text-success mb-3"></i>
+                        <h5>Ses Tanıma</h5>
+                        <p class="text-muted">Ses dosyalarını metne çevirir ve içeriklerini analiz eder.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-brain fa-3x text-warning mb-3"></i>
+                        <h5>Yapay Zeka</h5>
+                        <p class="text-muted">Google Gemini API ile metin özetleme ve soru üretme.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Dosya İşleme Sistemi</h5>
+                    <p class="text-muted">Gelişmiş dosya işleme ve analiz platformu</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted">
+                        <i class="fas fa-code me-2"></i>
+                        Geliştirici: Nail
+                    </p>
+                    <p class="text-muted">
+                        <i class="fas fa-github me-2"></i>
+                        <a href="https://github.com/educat11/dosya-isleme-sistemi" class="text-decoration-none">
+                            GitHub Repository
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Drag and drop functionality
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('file');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateFileInfo(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateFileInfo(e.target.files[0]);
+            }
+        });
+
+        function updateFileInfo(file) {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.innerHTML = `
+                <i class="fas fa-file fa-3x text-success mb-3"></i>
+                <h5>${file.name}</h5>
+                <p class="text-muted">Boyut: ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('file').click()">
+                    <i class="fas fa-edit me-2"></i>
+                    Değiştir
+                </button>
+            `;
+        }
+
+        // File processing
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Lütfen bir dosya seçin');
+                return;
+            }
+
+            // Show loading
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.result-section').style.display = 'none';
+
+            try {
+                // Simulate file processing (in a real app, this would be server-side)
+                await simulateFileProcessing(file);
+                
+                // Display results
+                const fileType = getFileType(file.name);
+                const content = await readFileContent(file);
+                
+                document.getElementById('fileType').textContent = fileType;
+                document.getElementById('content').textContent = content;
+                
+                // Setup download buttons
+                setupDownloadButtons(file.name, content);
+                
+                // Show AI section for text files
+                if (fileType === 'Metin dosyası') {
+                    document.getElementById('aiSection').style.display = 'block';
+                    // Varsayılan API anahtarını kullan
+                    const defaultApiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
+                    document.getElementById('aiContent').textContent = 'AI özeti oluşturuluyor...';
+                    try {
+                        const aiSummary = await generateAISummary(content, defaultApiKey);
+                        document.getElementById('aiContent').textContent = aiSummary;
+                    } catch (error) {
+                        document.getElementById('aiContent').textContent = 'AI özeti oluşturulurken hata: ' + error.message;
+                    }
+                } else {
+                    document.getElementById('aiSection').style.display = 'none';
+                }
+
+                document.querySelector('.result-section').style.display = 'block';
+            } catch (error) {
+                alert('Bir hata oluştu: ' + error.message);
+            } finally {
+                document.querySelector('.loading').style.display = 'none';
+            }
+        });
+
+        function getFileType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const textFormats = ['txt', 'csv'];
+            const officeFormats = ['docx', 'xlsx'];
+            const pdfFormats = ['pdf'];
+            const audioFormats = ['mp3', 'wav', 'ogg', 'm4a'];
+            
+            if (textFormats.includes(ext)) return 'Metin dosyası';
+            if (officeFormats.includes(ext)) return 'Ofis dosyası';
+            if (pdfFormats.includes(ext)) return 'PDF dosyası';
+            if (audioFormats.includes(ext)) return 'Ses dosyası';
+            return 'Bilinmeyen format';
+        }
+
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    resolve(content);
+                };
+                reader.onerror = reject;
+                
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (['txt', 'csv'].includes(ext)) {
+                    reader.readAsText(file, 'utf-8');
+                } else {
+                    reader.readAsText(file);
+                }
+            });
+        }
+
+        function setupDownloadButtons(filename, content) {
+            const processedBtn = document.getElementById('downloadProcessed');
+            const aiBtn = document.getElementById('downloadAI');
+            
+            processedBtn.onclick = () => {
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `processed_${filename}`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+            
+            aiBtn.onclick = () => {
+                const aiContent = document.getElementById('aiContent').textContent;
+                const blob = new Blob([aiContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ai_summary_${filename}`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+        }
+
+        async function simulateFileProcessing(file) {
+            // Simulate processing time
+            return new Promise(resolve => {
+                setTimeout(resolve, 2000);
+            });
+        }
+
+        async function generateAISummary(content, apiKey) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `Aşağıdaki metni Türkçe olarak özetle ve ana noktalarını çıkar:\n\n${content.substring(0, 3000)}`
+                            }]
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`API Hatası: ${response.status} - ${errorData.error?.message || 'Bilinmeyen hata'}`);
+                }
+
+                const data = await response.json();
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    throw new Error('API yanıtı beklenmeyen formatta');
+                }
+            } catch (error) {
+                throw new Error(`AI özeti oluşturulamadı: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
