@@ -304,8 +304,8 @@
                 // Setup download buttons
                 setupDownloadButtons(file.name, content);
                 
-                // Show AI section for text files
-                if (fileType === 'Metin dosyası') {
+                // Show AI section when we have textual content (works for txt/csv/docx/pdf/ocr)
+                if ((content || '').trim().length > 0) {
                     document.getElementById('aiSection').style.display = 'block';
                     // Varsayılan API anahtarını kullan
                     const defaultApiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
