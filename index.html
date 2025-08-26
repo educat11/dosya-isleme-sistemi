@@ -609,13 +609,13 @@
                 const inputName = 'input.' + file.name.split('.').pop().toLowerCase();
                 ffmpeg.FS('writeFile', inputName, new Uint8Array(await file.arrayBuffer()));
 
-                // Convert to mono 16k wav (small for transcription)
-                const outputName = 'audio.wav';
-                await ffmpeg.run('-i', inputName, '-ac', '1', '-ar', '16000', outputName);
+                // Convert to mono 16k mp3 (often recognized better by API)
+                const outputName = 'audio.mp3';
+                await ffmpeg.run('-i', inputName, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '128k', outputName);
 
-                const wavData = ffmpeg.FS('readFile', outputName);
-                const blob = new Blob([wavData.buffer], { type: 'audio/wav' });
-                return await transcribeBlobWithGemini(blob, 'audio/wav', apiKey);
+                const mp3Data = ffmpeg.FS('readFile', outputName);
+                const blob = new Blob([mp3Data.buffer], { type: 'audio/mpeg' });
+                return await transcribeBlobWithGemini(blob, 'audio/mpeg', apiKey);
             } catch (e) {
                 // Fallback: capture audio via MediaRecorder in real-time (no ffmpeg)
                 const blob = await extractAudioWithMediaRecorder(file);
