@@ -328,8 +328,10 @@
                     document.getElementById('aiSection').style.display = 'none';
                 }
 
-                // If video, do automatic transcription and place result into processed content
-                const isVideo = ['mp4','webm'].includes(file.name.split('.').pop().toLowerCase());
+                // If video/audio, do automatic transcription and place result into processed content
+                const extLower = file.name.split('.').pop().toLowerCase();
+                const isVideo = ['mp4','webm'].includes(extLower);
+                const isAudio = ['mp3','wav','ogg','m4a'].includes(extLower);
                 if (isVideo) {
                     try {
                         document.getElementById('content').textContent = 'Transkripsiyon yapılıyor...';
@@ -337,6 +339,23 @@
                         const transcript = await extractAudioAndTranscribe(file, apiKey);
                         document.getElementById('content').textContent = transcript;
                         // Opsiyonel: transkript üzerinden AI özeti üret
+                        try {
+                            document.getElementById('aiSection').style.display = 'block';
+                            document.getElementById('aiContent').textContent = 'AI özeti oluşturuluyor...';
+                            const aiSummary = await generateAISummary(transcript, apiKey);
+                            document.getElementById('aiContent').textContent = aiSummary;
+                        } catch (_) {}
+                    } catch (err) {
+                        alert('Transkripsiyon hatası: ' + err.message);
+                    }
+                }
+                if (isAudio) {
+                    try {
+                        document.getElementById('content').textContent = 'Transkripsiyon yapılıyor...';
+                        const apiKey = 'AIzaSyAK0Wn6shH7X517gAOTUHaTFkTSRKIA4dE';
+                        const mime = file.type || (extLower === 'mp3' ? 'audio/mpeg' : extLower === 'wav' ? 'audio/wav' : extLower === 'ogg' ? 'audio/ogg' : 'audio/m4a');
+                        const transcript = await transcribeBlobWithGemini(file, mime, apiKey);
+                        document.getElementById('content').textContent = transcript;
                         try {
                             document.getElementById('aiSection').style.display = 'block';
                             document.getElementById('aiContent').textContent = 'AI özeti oluşturuluyor...';
@@ -459,19 +478,8 @@
                 }
 
                 if (['mp3','wav','ogg','m4a'].includes(ext)) {
-                    const objectUrl = URL.createObjectURL(file);
-                    const audio = new Audio();
-                    audio.preload = 'metadata';
-                    audio.src = objectUrl;
-                    audio.onloadedmetadata = () => {
-                        const duration = isFinite(audio.duration) ? audio.duration : 0;
-                        URL.revokeObjectURL(objectUrl);
-                        resolve(`Ses dosyası bilgileri\nSüre (sn): ${duration.toFixed(2)}`);
-                    };
-                    audio.onerror = () => {
-                        URL.revokeObjectURL(objectUrl);
-                        resolve('Ses dosyası yüklendi ancak meta bilgileri okunamadı.');
-                    };
+                    // Ses için önizleme metni göstermiyoruz; otomatik transkripsiyon ayrı başlıyor
+                    resolve('');
                     return;
                 }
 
